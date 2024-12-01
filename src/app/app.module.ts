@@ -1,57 +1,51 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { CamionsComponent } from './camions/camions.component';
-import { AddCamionComponent } from './add-camion/add-camion.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { UpdateCamionComponent } from './update-camion/update-camion.component';
-import { LoginComponent } from './login/login.component';
-import { ForbiddenComponent } from './forbidden/forbidden.component';
-import { RechercheParMarqueComponent } from './recherche-par-marque/recherche-par-marque.component';
-import { SearchFilterPipe } from './search-filter.pipe';
-import { RechercheparnomComponent } from './rechercheparnom/rechercheparnom.component';
-import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
-import { TokenInterceptor } from './services/token.interceptor';
-import { ListeMarquesComponent } from './services/liste-marques/liste-marques.component';
-import { UpdateMarqueComponent } from './update-marque/update-marque.component';
-import { RegisterComponent } from './register/register.component';
-import { VerifEmailComponent } from './verif-email/verif-email.component';
-import { ToastrModule } from 'ngx-toastr';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import { HttpClientModule,HTTP_INTERCEPTORS } from '@angular/common/http';
+import { KeycloakAngularModule, KeycloakService } from 'keycloak-angular';
+
+function initializeKeycloak(keycloak: KeycloakService) {
+  return () =>
+  keycloak.init({
+  config: {
+  url: 'http://localhost:8090',
+  realm: 'mezen-realm',
+  clientId: 'cam-app'
+  },
+   initOptions: {
+  /*onLoad :'login-required',
+  checkLoginIframe: true */
+  onLoad: 'check-sso',
+  silentCheckSsoRedirectUri:
+  window.location.origin + '/assets/silent-check-sso.html'
+  }
+  });
+  }
 
 
 @NgModule({
   declarations: [
     AppComponent,
     CamionsComponent,
-    AddCamionComponent,
-    UpdateCamionComponent,
-    LoginComponent,
-    ForbiddenComponent,
-    RechercheParMarqueComponent,
-    SearchFilterPipe,
-    RechercheparnomComponent,
-    ListeMarquesComponent,
-    UpdateMarqueComponent,
-    RegisterComponent,
-    VerifEmailComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
-    FormsModule,
-    HttpClientModule,
-    ReactiveFormsModule,
-    BrowserAnimationsModule,
-    ToastrModule.forRoot(), // ToastrModule added
+    KeycloakAngularModule,
+    HttpClientModule
 
   ],
-  providers: [{ provide : HTTP_INTERCEPTORS,
-    useClass : TokenInterceptor,
-    multi : true}
+  providers: [{
+    provide: APP_INITIALIZER,
+    useFactory: initializeKeycloak,
+    multi: true,
+    deps: [KeycloakService]
+    }
+    
     ],
   bootstrap: [AppComponent]
 })
